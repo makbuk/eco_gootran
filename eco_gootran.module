@@ -1,0 +1,181 @@
+<?php
+
+function eco_gootran_node_insert($node) {
+	if ($node->type == 'addproblem') {
+		$source = 'ua';
+		$target = 'en';
+
+        if($node->nid){
+//          $translations = translation_node_get_translations($node->nid);
+//			if (!isset($translations['en'])){
+			
+			$fd_title = field_get_items('node', $node, 'title_field');
+			if ($fd_title) {
+				$node->title_field['en'][0]['value'] = translate($source, $target, $fd_title[0]['value']);
+			}
+			
+			$fd_description = field_get_items('node', $node, 'field_description');
+			if ($fd_description) {
+				$node->field_description['en'][0]['value'] = translate($source, $target, $fd_description[0]['value']);
+			}
+
+			$fd_proposal = field_get_items('node', $node, 'field_proposal');
+			if ($fd_proposal) {
+				$node->field_proposal['en'][0]['value'] = translate($source, $target, $fd_proposal[0]['value']);
+			}
+				
+			entity_translation_get_handler('node', $node)->setTranslation(array(
+															  'translate' => 0,
+															  'status' => 1,
+															  'language' => 'en',
+															  'source' => 'uk'
+															), $node);
+
+			field_attach_update('node', $node);			
+				
+//			}//if (isset($translations['en']))
+		}//if($node->nid)
+    }//if ($node->type == 'addproblem')
+}
+
+function eco_gootran_node_update($node) {
+	if ($node->type == 'addproblem') {
+		$source = 'ua';
+		$target = 'en';
+
+        if($node->nid){
+          $translations = translation_node_get_translations($node->nid);
+
+			if (!isset($translations['en'])){
+			
+				$fd_title = field_get_items('node', $node, 'title_field');
+				if ($fd_title) {
+					$node->title_field['en'][0]['value'] = translate($source, $target, $fd_title[0]['value']);
+				}
+			
+				$fd_description = field_get_items('node', $node, 'field_description');
+				if ($fd_description) {
+					$node->field_description['en'][0]['value'] = translate($source, $target, $fd_description[0]['value']);
+				}
+
+				$fd_proposal = field_get_items('node', $node, 'field_proposal');
+				if ($fd_proposal) {
+					$node->field_proposal['en'][0]['value'] = translate($source, $target, $fd_proposal[0]['value']);
+				}
+				
+				entity_translation_get_handler('node', $node)->setTranslation(array(
+																  'translate' => 0,
+																  'status' => 1,
+																  'language' => 'en',
+																  'source' => 'uk'
+																), $node);
+
+				field_attach_update('node', $node);			
+				
+			}//if (isset($translations['en']))
+		}//if($node->nid)
+    }//if ($node->type == 'addproblem')
+}
+
+
+
+//https://github.com/statickidz/php-google-translate-free
+function translate($source, $target, $text){
+	$len = 999;//on which parts to divide the line
+
+	if (strlen($text) < $len) {
+		// Request translation
+		$response = requestTranslation($source, $target, $text);
+		// Clean translation
+		$translation = getSentencesFromJSON($response);
+	
+	} else {
+		$translation = cut_into_pieces($source,$target,$text,$len);
+	}
+
+return $translation;
+}
+
+
+function cut_into_pieces ($source,$target,$text,$maxPieceLen=5000){
+	
+	if (round(strlen($text) / $maxPieceLen) == (strlen($text) / $maxPieceLen)) {
+		$pieces = strlen($text) / $maxPieceLen;
+		
+	} else {
+		$pieces = round(strlen($text) / $maxPieceLen) + 1;
+		
+	}
+
+	for ($i=0; $i<$pieces; $i++) {
+
+		if ($i==0) {
+			
+			$subtext = substr($text, 0, strpos($text, ' ', $maxPieceLen)); 
+			$text = substr($text, strlen($subtext));
+		} else {
+			$subtext = substr($text, 0, strpos($text, ' ', $maxPieceLen)); 
+			$text=substr($text, strlen($subtext)); 
+		}
+		
+		$response = requestTranslation($source, $target, $subtext);
+		$translation .= getSentencesFromJSON($response);
+	} 
+return $translation;	
+}
+
+
+function requestTranslation($source, $target, $text){
+	// Google translate URL
+	$url = "https://translate.google.com/translate_a/single?client=at&dt=t&dt=ld&dt=qca&dt=rm&dt=bd&dj=1&hl=es-ES&ie=UTF-8&oe=UTF-8&inputm=2&otf=2&iid=1dd3b944-fa62-4b55-b330-74909a99969e";
+
+	$fields = array(
+		'sl' => urlencode($source),
+		'tl' => urlencode($target),
+		'q' => urlencode($text)
+	);
+
+	if(strlen($fields['q'])>=5000)
+		throw new \Exception("Maximum number of characters exceeded: 5000");
+
+	// URL-ify the data for the POST
+	$fields_string = "";
+	foreach ($fields as $key => $value) {
+		$fields_string .= $key . '=' . $value . '&';
+	}
+
+	rtrim($fields_string, '&');
+
+	// Open connection
+	$ch = curl_init();
+
+	// Set the url, number of POST vars, POST data
+	curl_setopt($ch, CURLOPT_URL, $url);
+	curl_setopt($ch, CURLOPT_POST, count($fields));
+	curl_setopt($ch, CURLOPT_POSTFIELDS, $fields_string);
+	curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+	curl_setopt($ch, CURLOPT_ENCODING, 'UTF-8');
+	curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+	curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
+	curl_setopt($ch, CURLOPT_USERAGENT, 'AndroidTranslate/5.3.0.RC02.130475354-53000263 5.1 phone TRANSLATE_OPM5_TEST_1');
+
+	// Execute post
+	$result = curl_exec($ch);
+
+	// Close connection
+	curl_close($ch);
+
+return $result;
+}
+
+
+function getSentencesFromJSON($json){
+	$sentencesArray = json_decode($json, true);
+	$sentences = "";
+
+	foreach ($sentencesArray["sentences"] as $s) {
+		$sentences .= isset($s["trans"]) ? $s["trans"] : '';
+	}
+
+return $sentences;
+}

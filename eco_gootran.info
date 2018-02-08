@@ -1,0 +1,4 @@
+name = GooTran
+description = PHP module for talking to Google's Translate API for free.
+core = 7.x
+version = "7.x-0.1"
